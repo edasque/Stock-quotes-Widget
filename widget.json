@@ -1,0 +1,6 @@
+{
+  "name": "Stock quotes widget",
+  "description": "Displays stock quotes in a table format with color-coding of wins/loss",
+  "author": "Erik Dasque",
+  "email": "erik.dasque@gmail.com"
+}
