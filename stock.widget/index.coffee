@@ -3,8 +3,8 @@ command: '/usr/local/bin/node Stock-quotes-Widget/stock.widget/src/get_stocks_in
 refreshFrequency: '1m'
 
 style: """
-  bottom: 360px
-  right: 10px
+  bottom: 10px
+  right: 5px
   color: #fff
   font-family: Monaco
   table
@@ -13,14 +13,14 @@ style: """
     background: rgba(#334477)
   td
     text-align: center
-    padding: 4px 6px
+    padding: 3px 6px
     text-shadow: 0 0 1px rgba(#000, 0.5)
 
   thead tr
     background: rgba(#336699,0.2)
     &:first-child td
       font-weight: 400
-	  font-size: 12px
+	  font-size: 9px
     &:last-child td
       padding-bottom: 4px
       font-weight: 500

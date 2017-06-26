@@ -1,5 +1,5 @@
 'use strict'
-const tickers = ["^IXIC", "AAPL", "DIS", "HAS", "FB", "GOOG", "EIGI", "AMZN", "NFLX", "TSLA", "AXP","COST"];
+const tickers = require("./config.json").tickers.sort()
 const yahooFinance = require('yahoo-finance');
 const moment = require('moment');
 const fields_we_need = ['s', 'l1', 'c1', 'p', 'p2']
