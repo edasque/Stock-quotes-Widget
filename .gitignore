@@ -1,1 +1,6 @@
 stock.widget/src/node_modules/
+/stock.widget/src/node_modules/yahoo-finance/node_modules/request/node_modules/.bin/uuid
+/stock.widget/src/node_modules/yahoo-finance/node_modules/request/node_modules/http-signature/node_modules/.bin/sshpk-sign
+/stock.widget/src/node_modules/yahoo-finance/node_modules/request/node_modules/http-signature/node_modules/.bin/sshpk-verify
+/stock.widget/src/node_modules/yahoo-finance/node_modules/request/node_modules/.bin/har-validator
+/stock.widget/src/node_modules/yahoo-finance/node_modules/request/node_modules/http-signature/node_modules/.bin/sshpk-conv
