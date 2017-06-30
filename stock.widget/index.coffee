@@ -76,7 +76,7 @@ updateBody: (data, table) ->
   lightgreen = "background:#00B000;"
 
   for property, ticker of data
-
+    # console.dir ticker
     tableRow = $("<tr></tr>").appendTo(tbody)
     currency = "$"
     # if ticker.symbol.indexOf("^") is -1 then currencey = "er#"
@@ -96,19 +96,21 @@ updateBody: (data, table) ->
 
     if (ticker.change>0) then ticker.change = "+" + ticker.change
 
-    ticker.history_csv = ""
+    # ticker.history_csv = ""
 
-    for item,index in ticker.historical
-      if (item.close) then ticker.history_csv += item.close+","
+    # for item,index in ticker.historical
+    #   if (item.close) then ticker.history_csv += item.close+","
 
-    ticker.history_csv = (ticker.history_csv).substring(0, (ticker.history_csv).length - 1)
+    # ticker.history_csv = (ticker.history_csv).substring(0, (ticker.history_csv).length - 1)
+    # 
+    ticker.lastTradePriceOnly = Number(ticker.lastTradePriceOnly).toFixed(2)
 
     ticker.change = if (ticker.change) then ticker.change else "&nbsp;&nbsp;&nbsp;"
     $("<td style='text-align:left;background:#336699;'><a href='https://www.google.com/finance?client=ob&q=#{ticker.symbol}'>#{ticker.symbol}</a></td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{currency}#{ticker.lastTradePriceOnly}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.change}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.changeInPercent+"%"}</td>").appendTo(tableRow)
-    # $("<td style='text-align:center;background:#FFF;'><span class='inlinesparkline'>#{ticker.history_csv}</span></td>").appendTo(tableRow)
+    # $("<td style='text-align:center;background:#FFF;'><span class='inlinesparkline'>#1,2,3,4,5,6,7</span></td>").appendTo(tableRow)
 
 
   # $.fn.sparkline.defaults.common.chartRangeMin = 0;
@@ -117,7 +119,7 @@ updateBody: (data, table) ->
 
 
 update: (output, domEl) ->
-  rows = JSON.parse(output)
+  rows = JSON.parse(output).quotes
   table = $(domEl).find("table")
 
   @updateHeader table

@@ -12,6 +12,11 @@ var historical_quotes;
 var current_quotes;
 var consolidated_quotes = {}
 
+const request  = require('request')
+
+
+const RobinHood_API_URL="https://api.robinhood.com/quotes/?symbols=" // "NVDA,GOOG"
+
 function getHistoricalQuotes(from_date, to_date, for_tickers) {
   yahooFinance.historical({
     symbols: for_tickers,
@@ -25,6 +30,55 @@ function getHistoricalQuotes(from_date, to_date, for_tickers) {
     }
   })
 }
+function getQuotes_from_RH(for_tickers,callback) {
+
+  var request = require('request');
+
+  var quotes = ""
+
+  for_tickers.forEach(function(value, key, listObj) {
+
+    quotes += value
+    if (key!=(listObj.length-1)) quotes += ','
+
+  })
+
+
+  request(RobinHood_API_URL+quotes, function (error, response, body) {
+    if (error) {
+     console.log('error:', error); 
+     console.log('statusCode:', response && response.statusCode); 
+    }
+    else{
+    callback(JSON.parse(body).results); 
+  }
+    
+  });
+
+}
+
+function printResults (data) {
+  // console.log(JSON.stringify(data));
+  var output_array=[]
+  data.forEach(function(value, key, listObj) {
+
+    const lastTradePriceOnly=value.last_trade_price
+    const previousClose = value.previous_close
+    const change = (lastTradePriceOnly - previousClose).toFixed(2)
+    const changeInPercent = (lastTradePriceOnly  / previousClose)-1
+    // console.log(lastTradePriceOnly)
+    // console.log(previousClose)
+    // console.log(change)
+    // console.log(changeInPercent)
+
+    output_array.push({"symbol":value.symbol,"previousClose":previousClose,"lastTradePriceOnly":lastTradePriceOnly,"change":change,"changeInPercent":changeInPercent})
+
+
+  })
+  var output = {"quotes":output_array}
+  console.log(JSON.stringify(output))
+}
+
 
 function getQuotes(for_tickers) {
   yahooFinance.snapshot({
@@ -48,4 +102,5 @@ function processResults() {
   })
   console.log(JSON.stringify(consolidated_quotes))
 }
-getHistoricalQuotes(a_month_ago, now, tickers);
+// getHistoricalQuotes(a_month_ago, now, tickers);
+getQuotes_from_RH(tickers,printResults)
