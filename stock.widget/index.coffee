@@ -42,6 +42,8 @@ style: """
 """
 
 render: -> """
+  <script type="text/javascript" src="http://bunchofjson.s3-website-us-east-1.amazonaws.com/jquery.sparkline.min.js"></script>
+
   <table>
     <thead>
     </thead>
@@ -56,9 +58,9 @@ updateHeader: (table) ->
   thead = table.find("thead")
   thead.empty()
 
-  thead.append "<tr><td colspan='5'>Stock Market</td></tr>"
+  thead.append "<tr><td colspan='6'>Stock Market</td></tr>"
   tableRow = $("<tr></tr>").appendTo(thead)
-  column_names = ["Ticker","Value","Change","%"] # ,"Spark"]
+  column_names = ["Ticker","Value","Change","%","Spark"]
 
   for column_name in column_names
     tableRow.append "<td>#{column_name}</td>"
@@ -106,19 +108,29 @@ updateBody: (data, table) ->
     ticker.lastTradePriceOnly = Number(ticker.lastTradePriceOnly).toFixed(2)
 
     ticker.change = if (ticker.change) then ticker.change else "&nbsp;&nbsp;&nbsp;"
+
     $("<td style='text-align:left;background:#336699;'><a href='https://www.google.com/finance?client=ob&q=#{ticker.symbol}'>#{ticker.symbol}</a></td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{currency}#{ticker.lastTradePriceOnly}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.change}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.changeInPercent+"%"}</td>").appendTo(tableRow)
-    # $("<td style='text-align:center;background:#FFF;'><span class='inlinesparkline'>#1,2,3,4,5,6,7</span></td>").appendTo(tableRow)
+    $("<td style='text-align:center;background:#999;'><span class='inlinesparkline'>1,2,3,4,5,6,7</span></td>").appendTo(tableRow)
+
+  if $.fn.sparkline
+   $('.inlinesparkline').sparkline();
 
 
-  # $.fn.sparkline.defaults.common.chartRangeMin = 0;
-  # $.fn.sparkline.defaults.common.type = 'line';
-  # $('.inlinesparkline').sparkline(); 
+
+afterRender: -> 
+  # console.log("You are running jQuery version: " + $.fn.jquery )
+  # console.log("You are running sparkline: " + $.fn.sparkline )
 
 
 update: (output, domEl) ->
+  # console.log("You are running jQuery version: " + $.fn.jquery )
+  if $.fn.sparkline
+    $.fn.sparkline.defaults.common.chartRangeMin = 0
+    $.fn.sparkline.defaults.common.type = 'line'
+
   rows = JSON.parse(output).quotes
   table = $(domEl).find("table")
 
