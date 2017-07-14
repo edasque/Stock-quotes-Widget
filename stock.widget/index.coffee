@@ -1,4 +1,4 @@
-command: '/usr/local/bin/node Stock-quotes-Widget/stock.widget/src/get_stocks_info.js'
+command: 'Stock-quotes-Widget/stock.widget/src/get_stocks_info.sh'
 
 refreshFrequency: '1m'
 
@@ -83,7 +83,7 @@ updateBody: (data, table) ->
     currency = "$"
     # if ticker.symbol.indexOf("^") is -1 then currencey = "er#"
 
-    ticker.changeInPercent = (ticker.changeInPercent*100).toFixed(2)
+    # ticker.changeInPercent = (ticker.changeInPercent*100).toFixed(2)
 
     colour = lightgreen
 
@@ -98,25 +98,28 @@ updateBody: (data, table) ->
 
     if (ticker.change>0) then ticker.change = "+" + ticker.change
 
-    # ticker.history_csv = ""
+    ticker.history_csv = ""
 
-    # for item,index in ticker.historical
-    #   if (item.close) then ticker.history_csv += item.close+","
+    for item,index in ticker.lastX
 
+      ticker.history_csv += item+","
+
+    ticker.history_csv += ticker.lastTradePriceOnly
+    
     # ticker.history_csv = (ticker.history_csv).substring(0, (ticker.history_csv).length - 1)
-    # 
-    ticker.lastTradePriceOnly = Number(ticker.lastTradePriceOnly).toFixed(2)
 
-    ticker.change = if (ticker.change) then ticker.change else "&nbsp;&nbsp;&nbsp;"
+    # ticker.lastTradePriceOnly = Number(ticker.lastTradePriceOnly).toFixed(2)
+
+    # ticker.change = if (ticker.change) then ticker.change else "&nbsp;&nbsp;&nbsp;"
 
     $("<td style='text-align:left;background:#336699;'><a href='https://www.google.com/finance?client=ob&q=#{ticker.symbol}'>#{ticker.symbol}</a></td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{currency}#{ticker.lastTradePriceOnly}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.change}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.changeInPercent+"%"}</td>").appendTo(tableRow)
-    $("<td style='text-align:center;background:#999;'><span class='inlinesparkline'>1,2,3,4,5,6,7</span></td>").appendTo(tableRow)
+    $("<td style='text-align:center;#{colour};'><span class='inlinesparkline'>#{ticker.history_csv}</span></td>").appendTo(tableRow)
 
   if $.fn.sparkline
-   $('.inlinesparkline').sparkline();
+   $('.inlinesparkline').sparkline('html',{ chartRangeClip:'true' });
 
 
 
@@ -126,10 +129,10 @@ afterRender: ->
 
 
 update: (output, domEl) ->
-  # console.log("You are running jQuery version: " + $.fn.jquery )
-  if $.fn.sparkline
-    $.fn.sparkline.defaults.common.chartRangeMin = 0
-    $.fn.sparkline.defaults.common.type = 'line'
+  # console.log("Output: " + output )
+  # if $.fn.sparkline
+  #   $.fn.sparkline.defaults.common.chartRangeMin = 0
+  #   $.fn.sparkline.defaults.common.type = 'line'
 
   rows = JSON.parse(output).quotes
   table = $(domEl).find("table")

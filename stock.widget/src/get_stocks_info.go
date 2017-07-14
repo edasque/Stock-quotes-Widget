@@ -8,6 +8,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	// "log"
 	"os"
 	"sort"
@@ -19,8 +20,9 @@ import (
 	"time"
 )
 
-const RobinHood_API_URL_pre = "https://api.robinhood.com/quotes/historicals/" // "NVDA,GOOG"
-const RobinHood_API_URL_post = "/?span=year&interval=day&bounds=regular"      // "NVDA,GOOG"
+const RobinHood_API_Historicals_pre = "https://api.robinhood.com/quotes/historicals/" // "NVDA,GOOG"
+const RobinHood_API_Historicals_post = "/?span=year&interval=day&bounds=regular"      // "NVDA,GOOG"
+const RobinHood_API_Intraday = "https://api.robinhood.com/quotes/?symbols="
 
 var myClient = &http.Client{Timeout: 10 * time.Second}
 
@@ -47,7 +49,7 @@ type rhHistoricaQuotesResponse struct {
 }
 
 func getQuotesFromRHYearWorthOfDays(ticker string) []string {
-	var URLToQuery = RobinHood_API_URL_pre + ticker + RobinHood_API_URL_post
+	var URLToQuery = RobinHood_API_Historicals_pre + ticker + RobinHood_API_Historicals_post
 	// fmt.Println("URLToQuery: ", URLToQuery)
 	response, err := myClient.Get(URLToQuery)
 	if err != nil {
@@ -70,7 +72,7 @@ func getQuotesFromRHYearWorthOfDays(ticker string) []string {
 			// return err
 			fmt.Println("jsonErr:", jsonErr)
 		}
-		const X = 10
+		const X = 20
 		var numberOfDataPoints = len(quoteResponse.Historicals)
 		var lastX = append(quoteResponse.Historicals[numberOfDataPoints-X : numberOfDataPoints])
 		// fmt.Println("Historicals length:", numberOfDataPoints)
@@ -96,29 +98,51 @@ func getQuotesFromRHYearWorthOfDays(ticker string) []string {
 
 }
 
-// var request = require('request');
+type rhIntradayResult struct {
+	Symbol           string
+	Last_trade_price string
+	Previous_close   string
+}
+type rhIntradayResponse struct {
+	Results []rhIntradayResult
+}
 
-// var quotes = ""
+func getIntradayFromRH(tickersAsCSV string) []rhIntradayResult {
+	var URLToQuery = RobinHood_API_Intraday + tickersAsCSV
+	// fmt.Println("URLToQuery: ", URLToQuery)
+	response, err := myClient.Get(URLToQuery)
+	if err != nil {
+		// return err
+		fmt.Println("Error:", err)
+		if response != nil {
+			fmt.Println("Status:", response.Status)
+			fmt.Println("StatusCode:", response.StatusCode)
+		}
+		return nil
+	} else {
+		var quoteResponse rhIntradayResponse
 
-// for_tickers.forEach(function(value, key, listObj) {
+		buf, _ := ioutil.ReadAll(response.Body)
+		// fmt.Println("Intraday Body:", string(buf))
 
-//   quotes += value
-//   if (key!=(listObj.length-1)) quotes += ','
+		jsonErr := json.Unmarshal(buf, &quoteResponse)
 
-// })
+		if jsonErr != nil {
+			// return err
+			fmt.Println("jsonErr:", jsonErr)
+		}
 
-// request(RobinHood_API_URL+quotes, function (error, response, body) {
-//   if (error) {
-//    console.log('error:', error);
-//    console.log('statusCode:', response && response.statusCode);
-//   }
-//   else{
-//   callback(JSON.parse(body).results);
-// }
+		defer response.Body.Close()
 
-// });
+		return quoteResponse.Results
 
-// }
+		// foo1 := new(RH_Quotes_Response)
+		// json.NewDecoder(r.Body).Decode(foo1)
+		// fmt.Println(foo1)
+
+	}
+
+}
 
 func parseDate(timeString string) string {
 
@@ -142,14 +166,22 @@ func parseDate(timeString string) string {
 // }
 
 // var wg sync.WaitGroup
-type Historical_info struct {
-	Symbol string
-	// Begins_at   string
-	Close_price []string
+// type Historical_info struct {
+// 	Close_price string
+// }
+
+type Ticker struct {
+	Symbol             string   `json:"symbol"`
+	LastTradePriceOnly string   `json:"lastTradePriceOnly"`
+	Previous_close     string   `json:"previousClose"`
+	ChangeInPercent    string   `json:"changeInPercent"`
+	Change             string   `json:"change"`
+	LastX              []string `json:"lastX"`
 }
 
 type JSONOutput struct {
-	Historicals []Historical_info
+	// Historicals []Historical_info
+	Tickers []Ticker `json:"quotes"`
 }
 
 func main() {
@@ -159,7 +191,6 @@ func main() {
 		fmt.Printf("File error: %v\n", e)
 		os.Exit(1)
 	}
-	// fmt.Printf("config.json: %s\n", string(file))
 
 	type Config struct {
 		Tickers []string `json:"tickers"`
@@ -169,20 +200,40 @@ func main() {
 	json.Unmarshal(file, &conf)
 	sort.Strings(conf.Tickers)
 
-	// g_tickers := [...]string{"AAPL", "EIGI", "DIS", "HAS", "AMZN", "NFLX", "AXP", "GOOG", "FB", "TSLA", "MSFT"}
-	// fmt.Println(conf.Tickers)
+	CSVstring := getCSVfromTickersArray(conf.Tickers)
 
-	// CSVstring := getCSVfromTickersArray(conf.Tickers)
-	// fmt.Println(CSVstring)
+	var intradaysResults = getIntradayFromRH(CSVstring)
+	// fmt.Println(intradaysResults)
+
 	var outputStructure JSONOutput
-	outputStructure.Historicals = make([]Historical_info, len(conf.Tickers), len(conf.Tickers)*2)
+	outputStructure.Tickers = make([]Ticker, len(conf.Tickers), len(conf.Tickers)*2)
 
-	for index, element := range conf.Tickers {
-		var Quotes = getQuotesFromRHYearWorthOfDays(element)
-		var bob = Historical_info{element, Quotes}
-		outputStructure.Historicals[index] = bob
+	// type rhIntradayResult struct {
+	// 	Symbol           string
+	// 	Last_trade_price string
+	// 	Previous_close   string
+	// }
+
+	for index := range conf.Tickers {
+		var itr = intradaysResults[index]
+		ltp, err := strconv.ParseFloat(itr.Last_trade_price, 64)
+		lpc, err2 := strconv.ParseFloat(itr.Previous_close, 64)
+
+		if err != nil || err2 != nil {
+			fmt.Printf("Float conversion error: %v, %v\n", err, err2)
+		}
+		var change = strconv.FormatFloat(ltp-lpc, 'f', 2, 64)
+		var changePercent = strconv.FormatFloat((ltp-lpc)*100.0/ltp, 'f', 2, 64)
+		var historicals = getQuotesFromRHYearWorthOfDays(itr.Symbol)
+
+		outputStructure.Tickers[index] = Ticker{itr.Symbol, itr.Last_trade_price, itr.Previous_close, changePercent, change, historicals}
 	}
-	fmt.Println(outputStructure)
+
+	// for index, element := range conf.Tickers {
+	// 	var historicals = getQuotesFromRHYearWorthOfDays(element)
+	// 	var bob = Historical_info{element, Quotes}
+	// 	outputStructure.Historicals[index] = bob
+	// }
 
 	b, _ := json.Marshal(outputStructure)
 	fmt.Println(string(b))
