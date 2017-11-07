@@ -1,4 +1,4 @@
-command: 'Stock-quotes-Widget/stock.widget/src/get_stocks_info.sh'
+command: 'cd Stock-quotes-Widget/stock.widget/src/;./get_stocks_info'
 
 refreshFrequency: '1m'
 
