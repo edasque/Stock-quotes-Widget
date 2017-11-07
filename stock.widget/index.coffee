@@ -60,7 +60,7 @@ updateHeader: (table) ->
 
   thead.append "<tr><td colspan='6'>Stock Market</td></tr>"
   tableRow = $("<tr></tr>").appendTo(thead)
-  column_names = ["Ticker","Value","Change","%","Spark"]
+  column_names = ["Ticker","Value","Change","%","Spark (20d)"]
 
   for column_name in column_names
     tableRow.append "<td>#{column_name}</td>"
@@ -116,10 +116,15 @@ updateBody: (data, table) ->
     $("<td style='text-align:center;#{colour}'>#{currency}#{ticker.lastTradePriceOnly}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.change}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.changeInPercent+"%"}</td>").appendTo(tableRow)
-    $("<td style='text-align:center;#{colour};'><span class='inlinesparkline'>#{ticker.history_csv}</span></td>").appendTo(tableRow)
+    $("<td style='text-align:center;#{colour};'><span class='inlinesparkline'><!-- #{ticker.history_csv} --></span></td>").appendTo(tableRow)
 
   if $.fn.sparkline
-   $('.inlinesparkline').sparkline('html',{ chartRangeClip:'true' });
+        # $('.inlinesparkline').show()
+        $('.inlinesparkline').sparkline('html',{ chartRangeClip:'true' });
+  # else
+  #       $('.inlinesparkline').hide()
+
+
 
 
 

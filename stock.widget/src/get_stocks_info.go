@@ -25,7 +25,13 @@ const RobinHood_API_Historicals_post = "/?span=year&interval=day&bounds=regular"
 const RobinHood_API_Intraday = "https://api.robinhood.com/quotes/?symbols="
 
 var myClient = &http.Client{Timeout: 10 * time.Second}
-
+/**
+ * @brief      Gets a CSV string from an array of string.
+ *
+ * @param      tickers  The array of string
+ *
+ * @return     The csv as a string.
+ */
 func getCSVfromTickersArray(tickers []string) string {
 	list := ""
 	for key, element := range tickers {
