@@ -19,3 +19,5 @@ Adjust and amend stock list in src/config.json
 ## Important
 
 Since it seems that the Yahoo Finance API has been deprecated as had been the Google Finance API, I switched to the Robinhood Private API, [documented here](https://github.com/sanko/Robinhood), which *for now* allows querying real time stock quotes and get good historicals to plot the sparklines.
+
+**This however doesn't allow for Stock Indexes, Currency or non US markets, AFAIK.**
