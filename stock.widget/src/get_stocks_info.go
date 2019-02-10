@@ -9,9 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+
 	// "log"
 	"os"
 	"sort"
+
 	// "strings"
 	// "sync"
 	"io/ioutil"
@@ -25,6 +27,7 @@ const RobinHood_API_Historicals_post = "/?span=year&interval=day&bounds=regular"
 const RobinHood_API_Intraday = "https://api.robinhood.com/quotes/?symbols="
 
 var myClient = &http.Client{Timeout: 10 * time.Second}
+
 /**
  * @brief      Gets a CSV string from an array of string.
  *
@@ -54,10 +57,16 @@ type rhHistoricaQuotesResponse struct {
 	Symbol      string
 }
 
-func getQuotesFromRHYearWorthOfDays(ticker string) []string {
+func getQuotesFromRHYearWorthOfDays(ticker string, auth string) []string {
 	var URLToQuery = RobinHood_API_Historicals_pre + ticker + RobinHood_API_Historicals_post
 	// fmt.Println("URLToQuery: ", URLToQuery)
-	response, err := myClient.Get(URLToQuery)
+	req, err := http.NewRequest("GET", URLToQuery, nil)
+	// ...
+
+	req.Header.Add("Authorization", auth)
+	response, err := myClient.Do(req)
+
+	// response, err := myClient.Get(URLToQuery)
 	if err != nil {
 		// return err
 		fmt.Println("Error:", err)
@@ -68,6 +77,7 @@ func getQuotesFromRHYearWorthOfDays(ticker string) []string {
 		return nil
 
 	} else {
+
 		var quoteResponse rhHistoricaQuotesResponse
 
 		buf, _ := ioutil.ReadAll(response.Body)
@@ -104,6 +114,10 @@ func getQuotesFromRHYearWorthOfDays(ticker string) []string {
 
 }
 
+type rhAuthResult struct {
+	AccessToken string `json:"access_token"`
+}
+
 type rhIntradayResult struct {
 	Symbol           string
 	Last_trade_price string
@@ -113,10 +127,39 @@ type rhIntradayResponse struct {
 	Results []rhIntradayResult
 }
 
-func getIntradayFromRH(tickersAsCSV string) []rhIntradayResult {
+func getAuthToken(user string, password string) string {
+
+	url := "https://api.robinhood.com/oauth2/token/?username=" + user + "&password=" + password + "&grant_type=password&client_id=c82SH0WZOsabOXGP2sxqcj34FxkvfnWRZBKlBjFS"
+
+	req, _ := http.NewRequest("POST", url, nil)
+
+	req.Header.Add("cache-control", "no-cache")
+	// req.Header.Add("Postman-Token", "4e5775f8-f7cd-41e9-85c9-29aa6b2c7583")
+
+	res, _ := http.DefaultClient.Do(req)
+
+	defer res.Body.Close()
+	body, _ := ioutil.ReadAll(res.Body)
+
+	// fmt.Println(res)
+	// fmt.Println(string(body))
+
+	auth := rhAuthResult{}
+	json.Unmarshal(body, &auth)
+
+	// fmt.Println("AuthToken:", auth.AccessToken)
+
+	return ("Bearer " + auth.AccessToken)
+}
+func getIntradayFromRH(tickersAsCSV string, Auth string) []rhIntradayResult {
 	var URLToQuery = RobinHood_API_Intraday + tickersAsCSV
-	// fmt.Println("URLToQuery: ", URLToQuery)
-	response, err := myClient.Get(URLToQuery)
+
+	req, err := http.NewRequest("GET", URLToQuery, nil)
+
+	req.Header.Add("Authorization", Auth)
+	response, err := myClient.Do(req)
+
+	// response, err := myClient.Get(URLToQuery)
 	if err != nil {
 		// return err
 		fmt.Println("Error:", err)
@@ -126,10 +169,10 @@ func getIntradayFromRH(tickersAsCSV string) []rhIntradayResult {
 		}
 		return nil
 	} else {
+
 		var quoteResponse rhIntradayResponse
 
 		buf, _ := ioutil.ReadAll(response.Body)
-		// fmt.Println("Intraday Body:", string(buf))
 
 		jsonErr := json.Unmarshal(buf, &quoteResponse)
 
@@ -199,26 +242,25 @@ func main() {
 	}
 
 	type Config struct {
-		Tickers []string `json:"tickers"`
+		Tickers  []string `json:"tickers"`
+		User     string   `json:"user"`
+		Password string   `json:"password"`
 	}
 
 	conf := Config{}
 	json.Unmarshal(file, &conf)
+
+	AuthString := getAuthToken(conf.User, conf.Password)
+
 	sort.Strings(conf.Tickers)
 
 	CSVstring := getCSVfromTickersArray(conf.Tickers)
 
-	var intradaysResults = getIntradayFromRH(CSVstring)
+	var intradaysResults = getIntradayFromRH(CSVstring, AuthString)
 	// fmt.Println(intradaysResults)
 
 	var outputStructure JSONOutput
 	outputStructure.Tickers = make([]Ticker, len(conf.Tickers), len(conf.Tickers)*2)
-
-	// type rhIntradayResult struct {
-	// 	Symbol           string
-	// 	Last_trade_price string
-	// 	Previous_close   string
-	// }
 
 	for index := range conf.Tickers {
 		var itr = intradaysResults[index]
@@ -230,7 +272,7 @@ func main() {
 		}
 		var change = strconv.FormatFloat(ltp-lpc, 'f', 2, 64)
 		var changePercent = strconv.FormatFloat((ltp-lpc)*100.0/ltp, 'f', 2, 64)
-		var historicals = getQuotesFromRHYearWorthOfDays(itr.Symbol)
+		var historicals = getQuotesFromRHYearWorthOfDays(itr.Symbol, AuthString)
 
 		outputStructure.Tickers[index] = Ticker{itr.Symbol, itr.Last_trade_price, itr.Previous_close, changePercent, change, historicals}
 	}

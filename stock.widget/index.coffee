@@ -3,17 +3,17 @@ command: 'cd stock.widget/src/ && ./get_stocks_info'
 refreshFrequency: '1m'
 
 style: """
-  bottom: 10px
-  right: 5px
+  bottom: 2px
+  right: 2px
   color: #fff
-  font-family: Monaco
+  font-family: "Monaco"
   table
     border-collapse: collapse
     table-layout: fixed
     background: rgba(#334477)
   td
     text-align: center
-    padding: 3px 6px
+    padding: 1px 3px
     text-shadow: 0 0 1px rgba(#000, 0.5)
 
   thead tr
@@ -29,11 +29,11 @@ style: """
     text-decoration: none
   .updated
     text-align: center
-    font-size:.4em
-    padding-top: 1em
+    font-size:.3em
+    padding-top: .4em
 
   tbody td
-    font-size: 12px
+    font-size: 11px
 
   .today
     font-weight: bold
@@ -112,7 +112,7 @@ updateBody: (data, table) ->
 
     # ticker.change = if (ticker.change) then ticker.change else "&nbsp;&nbsp;&nbsp;"
 
-    $("<td style='text-align:left;background:#336699;'><a href='https://www.google.com/finance?client=ob&q=#{ticker.symbol}'>#{ticker.symbol}</a></td>").appendTo(tableRow)
+    $("<td style='text-align:left;background:#336699;'><a href='https://finance.yahoo.com/quote/#{ticker.symbol}/'>#{ticker.symbol}</a></td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{currency}#{ticker.lastTradePriceOnly}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.change}</td>").appendTo(tableRow)
     $("<td style='text-align:center;#{colour}'>#{ticker.changeInPercent+"%"}</td>").appendTo(tableRow)
@@ -140,6 +140,9 @@ update: (output, domEl) ->
   #   $.fn.sparkline.defaults.common.type = 'line'
 
   rows = JSON.parse(output).quotes
+  
+  if Math.random() * 10 + 1 > 5
+    rows.sort((a, b) -> a.changeInPercent - (b.changeInPercent))
   table = $(domEl).find("table")
 
   @updateHeader table
